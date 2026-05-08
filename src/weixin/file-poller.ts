@@ -8,7 +8,7 @@ const POLL_INTERVAL_MS = 5_000;
 const OUTGOING_FILE = path.resolve("data/outgoing-messages.json");
 
 interface OutgoingMessage {
-  to: string;
+  to?: string;
   text: string;
 }
 
@@ -62,22 +62,28 @@ export class FilePoller {
         return;
       }
 
-      if (!msg.to || !msg.text) {
-        console.error("[file-poller] 消息格式无效，需要 to 和 text 字段");
+      if (!msg.text) {
+        console.error("[file-poller] 消息格式无效，需要 text 字段");
+        fs.writeFileSync(OUTGOING_FILE, "", "utf-8");
+        return;
+      }
+      const recipient = msg.to || this.credentials.userId;
+      if (!recipient) {
+        console.error("[file-poller] 未指定接收人，且无默认用户");
         fs.writeFileSync(OUTGOING_FILE, "", "utf-8");
         return;
       }
 
       this.sending = true;
-      console.log(`[file-poller] 发送消息 to=${msg.to}: ${msg.text.slice(0, 100)}`);
+      console.log(`[file-poller] 发送消息 to=${recipient}: ${msg.text.slice(0, 100)}`);
       await sendTextMessage(
         this.credentials.baseUrl,
         this.credentials.token,
-        msg.to,
+        recipient,
         msg.text,
       );
       console.log("[file-poller] 消息发送成功");
-      addMessage({ from: this.credentials.userId ?? "bot", to: msg.to, text: msg.text, direction: "out" });
+      addMessage({ from: this.credentials.userId ?? "bot", to: recipient, text: msg.text, direction: "out" });
 
       fs.writeFileSync(OUTGOING_FILE, "", "utf-8");
       this.lastMtime = fs.statSync(OUTGOING_FILE).mtimeMs;

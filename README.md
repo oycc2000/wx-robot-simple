@@ -50,14 +50,21 @@ docker compose logs -f  # 查看日志（含二维码，首次需扫码）
 **消息格式：**
 
 ```json
-{"to": "USER_ID@im.wechat", "text": "从电脑端发送的消息"}
+{"text": "发送给自己的消息"}
+{"to": "USER_ID@im.wechat", "text": "发送给指定用户"}
 ```
+
+`to` 字段可选，不填时默认发送给扫码登录的微信用户。
 
 **Bash：**
 
 ```bash
+# 发送给自己
+echo '{"text":"消息内容"}' > data/outgoing-messages.json
+
+# 发送给指定用户
 cat > data/outgoing-messages.json << 'EOF'
-{"to": "目标用户ID@im.wechat", "text": "消息内容"}
+{"to": "USER_ID@im.wechat", "text": "消息内容"}
 EOF
 ```
 
@@ -114,9 +121,15 @@ curl http://localhost:3000/api/messages?user=USER_ID      # 按用户筛选
 
 ### POST /api/send
 
-发送消息到微信。
+发送消息到微信。`to` 可选，不填默认发送给自己。
 
 ```bash
+# 发送给自己
+curl -X POST http://localhost:3000/api/send \
+  -H "Content-Type: application/json" \
+  -d '{"text":"消息内容"}'
+
+# 发送给指定用户
 curl -X POST http://localhost:3000/api/send \
   -H "Content-Type: application/json" \
   -d '{"to":"USER_ID@im.wechat","text":"消息内容"}'
