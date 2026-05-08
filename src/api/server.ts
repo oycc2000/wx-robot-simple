@@ -58,15 +58,20 @@ export function createServer(credentials: LoginCredentials, port: number): http.
       try {
         const body = await readBody(req);
         const { to, text } = JSON.parse(body);
-        if (!to || !text) {
-          json(res, 400, { error: "缺少 to 或 text 字段" });
+        if (!text) {
+          json(res, 400, { error: "缺少 text 字段" });
+          return;
+        }
+        const recipient = to || credentials.userId;
+        if (!recipient) {
+          json(res, 400, { error: "未指定接收人，且无默认用户" });
           return;
         }
 
-        console.log(`[api] 发送消息 to=${to}: ${text.slice(0, 100)}`);
-        await sendTextMessage(credentials.baseUrl, credentials.token, to, text);
+        console.log(`[api] 发送消息 to=${recipient}: ${text.slice(0, 100)}`);
+        await sendTextMessage(credentials.baseUrl, credentials.token, recipient, text);
 
-        addMessage({ from: credentials.userId ?? "bot", to, text, direction: "out" });
+        addMessage({ from: credentials.userId ?? "bot", to: recipient, text, direction: "out" });
         json(res, 200, { success: true });
       } catch (err) {
         console.error(`[api] 发送失败: ${err}`);
