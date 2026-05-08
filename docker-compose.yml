@@ -1,0 +1,12 @@
+services:
+  wx-robot:
+    build: .
+    container_name: wx-robot-ilink
+    ports:
+      - "${API_PORT:-3000}:${API_PORT:-3000}"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    stdin_open: true
+    tty: true

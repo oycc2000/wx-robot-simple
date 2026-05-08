@@ -2,6 +2,7 @@ import { getUpdates, sendTextMessage, extractTextFromMessage } from "./weixin/ap
 import { MessageType } from "./weixin/types.js";
 import type { LoginCredentials, WeixinMessage } from "./weixin/types.js";
 import { AIChat } from "./ai/chat.js";
+import { addMessage } from "./api/message-store.js";
 
 const MAX_CONSECUTIVE_FAILURES = 5;
 const BACKOFF_DELAY_MS = 30_000;
@@ -89,6 +90,7 @@ export class Bot {
     if (!text.trim()) return;
 
     console.log(`[bot] 收到消息 from=${fromUser}: ${text.slice(0, 100)}`);
+    addMessage({ from: fromUser, to: this.credentials.userId ?? "bot", text, direction: "in" });
 
     if (text.trim() === "/clear") {
       this.ai.clearSession(fromUser);
@@ -116,6 +118,7 @@ export class Bot {
         text,
         contextToken,
       );
+      addMessage({ from: this.credentials.userId ?? "bot", to, text, direction: "out" });
     } catch (err) {
       console.error(`[bot] 发送消息失败 to=${to}: ${err}`);
     }

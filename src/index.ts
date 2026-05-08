@@ -1,6 +1,8 @@
 import { login, clearCredentials } from "./weixin/auth.js";
 import { AIChat } from "./ai/chat.js";
 import { Bot } from "./bot.js";
+import { FilePoller } from "./weixin/file-poller.js";
+import { createServer } from "./api/server.js";
 
 async function main(): Promise<void> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -16,6 +18,7 @@ async function main(): Promise<void> {
   }
 
   const credentials = await login();
+  const apiPort = parseInt(process.env.API_PORT ?? "3000", 10);
 
   const ai = new AIChat({
     apiKey,
@@ -25,15 +28,20 @@ async function main(): Promise<void> {
   });
 
   const bot = new Bot(credentials, ai);
+  const filePoller = new FilePoller(credentials);
+  const apiServer = createServer(credentials, apiPort);
 
   const shutdown = () => {
     console.log("\n正在关闭...");
+    filePoller.stop();
     bot.stop();
+    apiServer.close();
     process.exit(0);
   };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 
+  filePoller.start();
   await bot.start();
 }
 
