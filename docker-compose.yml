@@ -1,7 +1,7 @@
 services:
   wx-robot:
     build: .
-    container_name: wx-robot-ilink
+    container_name: wx-robot-simple
     ports:
       - "${API_PORT:-3000}:${API_PORT:-3000}"
     volumes:
